@@ -1,0 +1,63 @@
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import os
+print(os.listdir("../input"))
+from statsmodels.formula.api import ols
+import matplotlib.pyplot as plt
+% matplotlib inline
+madata = pd.read_csv("../input/MAdata.csv")
+madata
+
+from sklearn.linear_model import LinearRegression
+df = madata.drop("State", axis=1)
+X = df.drop("Death_Rate", axis = 1)
+lm = LinearRegression()
+lm.fit(X, madata.Death_Rate)
+print("Estimated Intercept is", lm.intercept_)
+print("The number of coefficients in this model are", lm.coef_)
+coef = zip(X.columns, lm.coef_)
+coef_df = pd.DataFrame(list(zip(X.columns, lm.coef_)), columns=['features', 'coefficients'])
+coef_df
+lm.predict(X)[0:17]
+
+import plotly.plotly as py 
+import plotly.graph_objs as go
+from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
+init_notebook_mode(connected=True)
+
+plt.scatter(df.Year, df.Death_Rate)
+plt.xlabel("Year")
+plt.ylabel("Death Rate with Age Adjusted")
+plt.title("Relationship between Year and Death Rate in the State of Massachusetts")
+
+trace = go.Scatter(
+    x =lm.predict(X),
+    y = df.Death_Rate,
+    mode = 'markers'
+)
+data = [trace]
+layout = go.Layout(
+    title='Death Rate vs. Predicted Death Rate',
+    xaxis=dict(
+        title='Predicted Death Rate',
+        titlefont=dict(
+            family='Courier New, monospace',
+            size=18,
+            color='#7f7f7f'
+        )
+    ),
+    yaxis=dict(
+        title='Predicted Death Rate',
+        titlefont=dict(
+            family='Courier New, monospace',
+            size=18,
+            color='#7f7f7f'
+        )
+    )
+)
+
+fig = go.Figure(data=data, layout=layout)
+iplot(fig)
+
+mse = np.mean((df.Death_Rate - lm.predict(X))**2)
+print(mse)
